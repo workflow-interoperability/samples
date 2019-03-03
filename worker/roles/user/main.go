@@ -5,7 +5,7 @@ import (
 	"github.com/zeebe-io/zeebe/clients/go/zbc"
 )
 
-const brokerAddr = "0.0.0.0:26500"
+const brokerAddr = "127.0.0.1:26500"
 
 func main() {
 	client, err := zbc.NewZBClient(brokerAddr)

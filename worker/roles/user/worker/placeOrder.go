@@ -43,8 +43,11 @@ func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 		return
 	}
 	reqData2 := types.ChangeProcessData{
-		IsApplicationRelatedDataChanged: true,
+		ProcessID:                       payload["processID"].(string),
+		IsProcessRelatedDataChanged:     true,
 		ProcessRelatedData:              string(data),
+		IsApplicationRelatedDataChanged: false,
+		ApplicationRelatedData:          []string{},
 	}
 	reqData3 := types.ChangeCondition{
 		ProcessID: payload["processID"].(string),
@@ -76,13 +79,13 @@ func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 		services.FailJob(client, job)
 		return
 	}
-	err = services.BlockchainTransaction("http://127.0.0.1:3000/api/CangeProcessData", string(jsonReqData2))
+	err = services.BlockchainTransaction("http://127.0.0.1:3000/api/ChangeProcessData", string(jsonReqData2))
 	if err != nil {
 		log.Println(err)
 		services.FailJob(client, job)
 		return
 	}
-	err = services.BlockchainTransaction("http://127.0.0.1:3000/api/ChangeCondition", string(jsonReqData3))
+	err = services.BlockchainTransaction("http://127.0.0.1:3000/api/ChhangeCondition", string(jsonReqData3))
 	if err != nil {
 		log.Println(err)
 		services.FailJob(client, job)

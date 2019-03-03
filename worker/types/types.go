@@ -22,6 +22,7 @@ type ChangeCondition struct {
 
 // ChangeProcessData is blockchain operation
 type ChangeProcessData struct {
+	ProcessID                       string   `json:"processID"`
 	IsProcessRelatedDataChanged     bool     `json:"isProcessRelatedDataChanged"`
 	ApplicationRelatedData          []string `json:"applicationRelatedData"`
 	IsApplicationRelatedDataChanged bool     `json:"isApplicationRelatedDataChanged"`
