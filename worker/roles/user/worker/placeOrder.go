@@ -14,7 +14,7 @@ import (
 // PlaceOrderWorker place order
 func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 	jobKey := job.GetKey()
-	log.Println("Start place order" + strconv.Itoa(int(jobKey)))
+	log.Println("Start place order " + strconv.Itoa(int(jobKey)))
 
 	payload, err := job.GetPayloadAsMap()
 	if err != nil {
@@ -39,8 +39,13 @@ func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 		return
 	}
 	newProcessInstance := types.Publish{
-		ProcessID:          id,
-		ProcessRelatedData: string(aData),
+		ProcessID:              id,
+		ProcessRelatedData:     string(aData),
+		ApplicationRelatedData: []string{},
+		SubscriberInformation: types.SubscriberInformation{
+			Roles: []string{},
+			ID:    "",
+		},
 	}
 	body, err := json.Marshal(&newProcessInstance)
 	if err != nil {

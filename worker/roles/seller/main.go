@@ -23,11 +23,11 @@ func main() {
 	stopChan := make(chan bool, 0)
 
 	// define worker
-	receiveOrderWorker := client.NewJobWorker().JobType("placeOrder").Handler(worker.ReceiveOrderWorker).Open()
+	receiveOrderWorker := client.NewJobWorker().JobType("receiveOrder").Handler(worker.ReceiveOrderWorker).Open()
 	defer receiveOrderWorker.Close()
 	go receiveOrderWorker.AwaitClose()
 
-	produce := client.NewJobWorker().JobType("placeOrder").Handler(worker.Produce).Open()
+	produce := client.NewJobWorker().JobType("produce").Handler(worker.Produce).Open()
 	defer produce.Close()
 	go produce.AwaitClose()
 
@@ -71,6 +71,10 @@ func createSellerWorkflowInstance(processID string, client zbc.ZBClient) {
 		log.Println(err)
 		return
 	}
+	if processData.Condition != "ordered" {
+		return
+	}
+	
 	// publish blockchain asset
 	id := services.GenerateXID()
 	var data map[string]interface{}
@@ -88,8 +92,13 @@ func createSellerWorkflowInstance(processID string, client zbc.ZBClient) {
 		return
 	}
 	newProcessInstance := types.Publish{
-		ProcessID:          id,
-		ProcessRelatedData: string(aData),
+		ProcessID:              id,
+		ProcessRelatedData:     string(aData),
+		ApplicationRelatedData: []string{},
+		SubscriberInformation: types.SubscriberInformation{
+			Roles: []string{},
+			ID:    "",
+		},
 	}
 	body, err := json.Marshal(&newProcessInstance)
 	if err != nil {
@@ -102,8 +111,9 @@ func createSellerWorkflowInstance(processID string, client zbc.ZBClient) {
 		return
 	}
 
+	data["processID"] = id
 	// add workflow instance
-	request, err := client.NewCreateInstanceCommand().BPMNProcessId("receiveOrder").LatestVersion().PayloadFromMap(data)
+	request, err := client.NewCreateInstanceCommand().BPMNProcessId("seller").LatestVersion().PayloadFromMap(data)
 	if err != nil {
 		log.Println(err)
 		return

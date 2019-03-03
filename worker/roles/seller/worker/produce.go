@@ -3,7 +3,6 @@ package worker
 import (
 	"encoding/json"
 	"log"
-	"math/rand"
 	"strconv"
 	"time"
 
@@ -23,14 +22,25 @@ func Produce(client worker.JobClient, job entities.Job) {
 		services.FailJob(client, job)
 		return
 	}
-	log.Println("Produce", payload["name"])
+	request, err := client.NewCompleteJobCommand().JobKey(jobKey).PayloadFromMap(payload)
+	if err != nil {
+		log.Println(err)
+		services.FailJob(client, job)
+		return
+	}
 
+	log.Println("Produce ", payload["name"])
 	// use sleep to mock produce
-	num := rand.Int31n(10)
-	time.Sleep(time.Duration(num) * time.Second)
+	time.Sleep(5 * time.Second)
 
+	id, has := payload["processID"].(string)
+	if !has {
+		log.Println("can not get process id from payload")
+		services.FailJob(client, job)
+		return
+	}
 	reqData3 := types.ChangeCondition{
-		ProcessID: payload["processID"].(string),
+		ProcessID: id,
 		Condition: "finished",
 	}
 
@@ -47,4 +57,6 @@ func Produce(client worker.JobClient, job entities.Job) {
 		services.FailJob(client, job)
 		return
 	}
+	log.Println("Produce for order " + strconv.Itoa(int(jobKey)) + " finished")
+	request.Send()
 }
