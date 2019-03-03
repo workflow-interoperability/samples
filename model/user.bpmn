@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" id="Definitions_111578n" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Zeebe Modeler" exporterVersion="0.5.0">
+  <bpmn:process id="user" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>SequenceFlow_06fokcz</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="ServiceTask_placeOrder" name="placeOrder">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="placeOrder" retries="1" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_06fokcz</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0b1yyzm</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_06fokcz" sourceRef="StartEvent_1" targetRef="ServiceTask_placeOrder" />
+    <bpmn:endEvent id="EndEvent_1j79sgy">
+      <bpmn:incoming>SequenceFlow_0b1yyzm</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_0b1yyzm" sourceRef="ServiceTask_placeOrder" targetRef="EndEvent_1j79sgy" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="user">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="401" y="214" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_0aboja0_di" bpmnElement="ServiceTask_placeOrder">
+        <dc:Bounds x="565" y="192" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_06fokcz_di" bpmnElement="SequenceFlow_06fokcz">
+        <di:waypoint x="437" y="232" />
+        <di:waypoint x="565" y="232" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_1j79sgy_di" bpmnElement="EndEvent_1j79sgy">
+        <dc:Bounds x="795" y="214" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0b1yyzm_di" bpmnElement="SequenceFlow_0b1yyzm">
+        <di:waypoint x="665" y="232" />
+        <di:waypoint x="795" y="232" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
