@@ -3,6 +3,7 @@ package worker
 import (
 	"encoding/json"
 	"log"
+	"strconv"
 
 	"github.com/workflow-interoperability/samples/worker/services"
 	"github.com/workflow-interoperability/samples/worker/types"
@@ -12,8 +13,8 @@ import (
 
 // PlaceOrderWorker place order
 func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
-	log.Println("Start to place order...")
 	jobKey := job.GetKey()
+	log.Println("Start place order" + strconv.Itoa(int(jobKey)))
 
 	payload, err := job.GetPayloadAsMap()
 	if err != nil {
@@ -29,6 +30,32 @@ func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 		return
 	}
 
+	// create blockchain instance
+	id := services.GenerateXID()
+	aData, err := json.Marshal(&payload)
+	if err != nil {
+		log.Println(err)
+		services.FailJob(client, job)
+		return
+	}
+	newProcessInstance := types.Publish{
+		ProcessID:          id,
+		ProcessRelatedData: string(aData),
+	}
+	body, err := json.Marshal(&newProcessInstance)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	err = services.BlockchainTransaction("http://127.0.0.1:3000/api/Publish", string(body))
+	if err != nil {
+		log.Println(err)
+		services.FailJob(client, job)
+		return
+	}
+	payload["processID"] = id
+	log.Println("Publish process success")
+
 	// change blockchain instance state
 	reqData1 := types.ChangeSubscriberInformation{
 		ProcessID: payload["processID"].(string),
@@ -36,31 +63,12 @@ func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 			Roles: []string{"seller"},
 		},
 	}
-	data, err := json.Marshal(&payload)
-	if err != nil {
-		log.Println(err)
-		services.FailJob(client, job)
-		return
-	}
-	reqData2 := types.ChangeProcessData{
-		ProcessID:                       payload["processID"].(string),
-		IsProcessRelatedDataChanged:     true,
-		ProcessRelatedData:              string(data),
-		IsApplicationRelatedDataChanged: false,
-		ApplicationRelatedData:          []string{},
-	}
 	reqData3 := types.ChangeCondition{
 		ProcessID: payload["processID"].(string),
 		Condition: "ordered",
 	}
 
 	jsonReqData1, err := json.Marshal(&reqData1)
-	if err != nil {
-		log.Println(err)
-		services.FailJob(client, job)
-		return
-	}
-	jsonReqData2, err := json.Marshal(&reqData2)
 	if err != nil {
 		log.Println(err)
 		services.FailJob(client, job)
@@ -79,19 +87,15 @@ func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 		services.FailJob(client, job)
 		return
 	}
-	err = services.BlockchainTransaction("http://127.0.0.1:3000/api/ChangeProcessData", string(jsonReqData2))
+	log.Println("Change subscriber success")
+	err = services.BlockchainTransaction("http://127.0.0.1:3000/api/ChangeCondition", string(jsonReqData3))
 	if err != nil {
 		log.Println(err)
 		services.FailJob(client, job)
 		return
 	}
-	err = services.BlockchainTransaction("http://127.0.0.1:3000/api/ChhangeCondition", string(jsonReqData3))
-	if err != nil {
-		log.Println(err)
-		services.FailJob(client, job)
-		return
-	}
+	log.Println("Change condition to ordered success")
 
-	log.Println("Place holder success!!!")
+	log.Println("Place order " + strconv.Itoa(int(jobKey)) + "success")
 	request.Send()
 }

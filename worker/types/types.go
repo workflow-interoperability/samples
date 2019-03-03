@@ -34,3 +34,13 @@ type ChangeSubscriberInformation struct {
 	ProcessID             string                `json:"processID"`
 	SubscriberInformation SubscriberInformation `json:"subscriberInformation"`
 }
+
+// ProcessInstance is blockchain asset 
+type ProcessInstance struct {
+	ProcessID              string                `json:"processID"`
+	Owner                  string                `json:"owner"`
+	SubscriberInformation  SubscriberInformation `json:"subscriberInformation"`
+	Condition              string                `json:"condition"`
+	ApplicationRelatedData []string              `json:"applicationRelatedData"`
+	ProcessRelatedData     string                `json:"processRelatedData"`
+}

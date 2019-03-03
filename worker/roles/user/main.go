@@ -12,8 +12,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	stopChan := make(chan bool, 0)
+
 	placeOrderWorker := client.NewJobWorker().JobType("placeOrder").Handler(worker.PlaceOrderWorker).Open()
 	defer placeOrderWorker.Close()
-
 	placeOrderWorker.AwaitClose()
+
+	<-stopChan
 }

@@ -1,12 +1,16 @@
 package services
 
 import (
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
 
+	"github.com/rs/xid"
+
+	"github.com/workflow-interoperability/samples/worker/types"
 	"github.com/zeebe-io/zeebe/clients/go/entities"
 	"github.com/zeebe-io/zeebe/clients/go/worker"
 )
@@ -39,4 +43,34 @@ func BlockchainTransaction(url, body string) error {
 		return errors.New(string(resbody))
 	}
 	return nil
+}
+
+// GetProcessInstance return process instance data
+func GetProcessInstance(url string) (types.ProcessInstance, error) {
+	var ret types.ProcessInstance
+	httpClient := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return ret, err
+	}
+	req.Header.Set("Accept", "application/json")
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return ret, err
+	}
+	defer resp.Body.Close()
+	resbody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return ret, err
+	}
+	if resp.StatusCode != 200 {
+		return ret, errors.New(string(resbody))
+	}
+	err = json.Unmarshal(resbody, &ret)
+	return ret, err
+}
+
+// GenerateXID generate unique id
+func GenerateXID() string {
+	return xid.New().String()
 }
