@@ -2,7 +2,6 @@ package worker
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/url"
 	"strconv"
@@ -52,7 +51,7 @@ func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 			WorkflowRelevantData: types.WorkflowRelevantData{
 				From: types.FromToData{
 					ProcessID:         processID,
-					ProcessInstanceID: strconv.Itoa(int(jobKey)),
+					ProcessInstanceID: payload["processInstanceID"].(string),
 					IESMID:            IESMID,
 				},
 				To: types.FromToData{
@@ -62,9 +61,9 @@ func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 				},
 			},
 		},
-		Owner: "user",
 		SubscriberInformation: types.SubscriberInformation{
-			ID: "seller",
+			Roles: []string{},
+			ID:    "seller",
 		},
 	}
 	pim := types.PublishIM{newIM}
@@ -73,7 +72,6 @@ func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 		log.Println(err)
 		return
 	}
-	fmt.Println(string(body))
 	err = services.BlockchainTransaction("http://127.0.0.1:3000/api/PublishIM", string(body))
 	if err != nil {
 		log.Println(err)
@@ -84,7 +82,6 @@ func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 	log.Println("Publish IM success")
 
 	// waiting for PIIS from receiver
-	// listen to blockchain event
 	u := url.URL{Scheme: "ws", Host: "127.0.0.1:3001", Path: ""}
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
@@ -109,7 +106,7 @@ func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 		}
 		switch structMsg["$class"].(string) {
 		case "org.sysu.wf.PIISCreatedEvent":
-			if ok, err := publishPIIS(structMsg["id"].(string), processID, strconv.Itoa(int(jobKey)), IESMID, newIM, c); err != nil {
+			if ok, err := publishPIIS(structMsg["id"].(string), newIM, c); err != nil {
 				services.FailJob(client, job)
 				return
 			} else if ok {
@@ -120,6 +117,7 @@ func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 			continue
 		}
 		if finished {
+			log.Println("publish piis success")
 			break
 		}
 	}

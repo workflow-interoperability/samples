@@ -10,24 +10,23 @@ import (
 	"github.com/workflow-interoperability/samples/worker/services"
 )
 
-func publishPIIS(piisid, processid, processInstanceid, iermid string, IM types.IM, conn *websocket.Conn) (bool, error) {
+func publishPIIS(piisid string, IM types.IM, conn *websocket.Conn) (bool, error) {
 	// get piis
 	processData, err := services.GetPIIS("http://127.0.0.1:3000/api/PIIS/" + piisid)
 	if err != nil {
 		log.Println(err)
 		return false, err
 	}
-	if !(processData.To.ProcessID == processid && processData.To.ProcessInstanceID == processInstanceid && processData.To.IESMID == iermid) {
+	if !(processData.To.ProcessID == IM.Payload.WorkflowRelevantData.From.ProcessID && processData.To.ProcessInstanceID == IM.Payload.WorkflowRelevantData.From.ProcessInstanceID && processData.To.IESMID == IM.Payload.WorkflowRelevantData.From.IESMID) {
 		return false, nil
 	}
 	// create piis
 	id := services.GenerateXID()
 	newPIIS := types.PIIS{
-		ID:    id,
-		From:  IM.Payload.WorkflowRelevantData.From,
-		To:    IM.Payload.WorkflowRelevantData.To,
-		IMID:  IM.ID,
-		Owner: "user",
+		ID:   id,
+		From: IM.Payload.WorkflowRelevantData.From,
+		To:   processData.From,
+		IMID: IM.ID,
 		SubscriberInformation: types.SubscriberInformation{
 			Roles: []string{},
 			ID:    "seller",
