@@ -2,6 +2,7 @@ package worker
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/url"
 	"strconv"
@@ -20,14 +21,14 @@ func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 	jobKey := job.GetKey()
 	log.Println("Start place order " + strconv.Itoa(int(jobKey)))
 
-	payload, err := job.GetPayloadAsMap()
+	payload, err := job.GetVariablesAsMap()
 	if err != nil {
 		log.Println(err)
 		services.FailJob(client, job)
 		return
 	}
 	payload["name"] = "book"
-	request, err := client.NewCompleteJobCommand().JobKey(jobKey).PayloadFromMap(payload)
+	request, err := client.NewCompleteJobCommand().JobKey(jobKey).VariablesFromMap(payload)
 	if err != nil {
 		log.Println(err)
 		services.FailJob(client, job)
@@ -72,6 +73,7 @@ func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 		log.Println(err)
 		return
 	}
+	fmt.Println(string(body))
 	err = services.BlockchainTransaction("http://127.0.0.1:3000/api/PublishIM", string(body))
 	if err != nil {
 		log.Println(err)

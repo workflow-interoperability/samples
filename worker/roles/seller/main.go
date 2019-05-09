@@ -84,7 +84,7 @@ func createSellerWorkflowInstance(imID, processID, iermID string, client zbc.ZBC
 	data["fromProcessInstanceID"] = imData.Payload.WorkflowRelevantData.From.ProcessInstanceID
 
 	// add workflow instance
-	request, err := client.NewCreateInstanceCommand().BPMNProcessId("seller").LatestVersion().PayloadFromMap(data)
+	request, err := client.NewCreateInstanceCommand().BPMNProcessId("seller").LatestVersion().VariablesFromMap(data)
 	if err != nil {
 		log.Println(err)
 		return

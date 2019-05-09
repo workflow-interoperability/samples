@@ -15,7 +15,8 @@ type FromToData struct {
 
 // WorkflowRelevantData is blockchain concept
 type WorkflowRelevantData struct {
-	From, To FromToData
+	From FromToData `json:"from"`
+	To   FromToData `json:"to"`
 }
 
 // ApplicationData is blockchain concept

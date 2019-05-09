@@ -18,13 +18,13 @@ func ReceiveOrderWorker(client worker.JobClient, job entities.Job) {
 	iesmid := "1"
 	jobKey := job.GetKey()
 	log.Println("Start receive order " + strconv.Itoa(int(jobKey)))
-	payload, err := job.GetPayloadAsMap()
+	payload, err := job.GetVariablesAsMap()
 	if err != nil {
 		log.Println(err)
 		services.FailJob(client, job)
 		return
 	}
-	request, err := client.NewCompleteJobCommand().JobKey(jobKey).PayloadFromMap(payload)
+	request, err := client.NewCompleteJobCommand().JobKey(jobKey).VariablesFromMap(payload)
 	if err != nil {
 		log.Println(err)
 		services.FailJob(client, job)
