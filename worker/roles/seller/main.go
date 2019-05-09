@@ -8,13 +8,14 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/workflow-interoperability/samples/worker/roles/seller/worker"
 	"github.com/workflow-interoperability/samples/worker/services"
-	"github.com/workflow-interoperability/samples/worker/types"
 	"github.com/zeebe-io/zeebe/clients/go/zbc"
 )
 
 const brokerAddr = "127.0.0.1:26500"
 
 func main() {
+	processID := "seller"
+	iesmid := "1"
 	client, err := zbc.NewZBClient(brokerAddr)
 	if err != nil {
 		panic(err)
@@ -26,10 +27,6 @@ func main() {
 	receiveOrderWorker := client.NewJobWorker().JobType("receiveOrder").Handler(worker.ReceiveOrderWorker).Open()
 	defer receiveOrderWorker.Close()
 	go receiveOrderWorker.AwaitClose()
-
-	produce := client.NewJobWorker().JobType("produce").Handler(worker.Produce).Open()
-	defer produce.Close()
-	go produce.AwaitClose()
 
 	// listen to blockchain event
 	u := url.URL{Scheme: "ws", Host: "127.0.0.1:3000", Path: ""}
@@ -55,8 +52,8 @@ func main() {
 				return
 			}
 			switch structMsg["$class"].(string) {
-			case "org.sysu.wf.ConditionChangedEvent":
-				createSellerWorkflowInstance(structMsg["processID"].(string), client)
+			case "org.sysu.wf.PublishIM":
+				createSellerWorkflowInstance(structMsg["id"].(string), processID, iesmid, client)
 			}
 		}
 	}()
@@ -64,54 +61,28 @@ func main() {
 	<-stopChan
 }
 
-func createSellerWorkflowInstance(processID string, client zbc.ZBClient) {
-	// get process data
-	processData, err := services.GetProcessInstance("http://127.0.0.1:3000/api/ProcessInstance/" + processID)
+func createSellerWorkflowInstance(imID, processID, iermID string, client zbc.ZBClient) {
+	// get im
+	imData, err := services.GetIM("http://127.0.0.1:3001/api/IM/" + imID)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	if processData.Condition != "ordered" {
+	if !(imData.Payload.WorkflowRelevantData.To.ProcessID == processID && imData.Payload.WorkflowRelevantData.To.IESMID == iermID) {
 		return
 	}
-	
+
 	// publish blockchain asset
-	id := services.GenerateXID()
 	var data map[string]interface{}
-	if processData.ProcessRelatedData != "" {
-		err = json.Unmarshal([]byte(processData.ProcessRelatedData), &data)
+	if imData.Payload.ApplicationData.URL != "" {
+		err = json.Unmarshal([]byte(imData.Payload.ApplicationData.URL), &data)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		delete(data, "processID")
 	}
-	aData, err := json.Marshal(&data)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	newProcessInstance := types.Publish{
-		ProcessID:              id,
-		ProcessRelatedData:     string(aData),
-		ApplicationRelatedData: []string{},
-		SubscriberInformation: types.SubscriberInformation{
-			Roles: []string{},
-			ID:    "",
-		},
-	}
-	body, err := json.Marshal(&newProcessInstance)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	err = services.BlockchainTransaction("http://127.0.0.1:3001/api/Publish", string(body))
-	if err != nil {
-		log.Println(err)
-		return
-	}
+	data["fromProcessInstanceID"] = imData.Payload.WorkflowRelevantData.From.ProcessInstanceID
 
-	data["processID"] = id
 	// add workflow instance
 	request, err := client.NewCreateInstanceCommand().BPMNProcessId("seller").LatestVersion().PayloadFromMap(data)
 	if err != nil {

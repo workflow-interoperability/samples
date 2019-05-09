@@ -1,0 +1,4 @@
+github.com/gorilla/websocket v1.4.0 h1:WDFjx/TMzVgy9VdMMQi2K2Emtwi2QcUQsztZ/zLaH/Q=
+github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
+github.com/zeebe-io/zeebe v0.0.0-20190508133823-2a8a769f1b7d h1:OAoSLWlEystdVKAeNLa5uN2vip65IEfjMXGdW1gY0xg=
+github.com/zeebe-io/zeebe v0.0.0-20190508133823-2a8a769f1b7d/go.mod h1:vr0zDEpttuCQReEhZLf8e6HCRtFneZtAjN3d3KP1T6U=

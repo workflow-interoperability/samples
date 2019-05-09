@@ -6,41 +6,54 @@ type SubscriberInformation struct {
 	ID    string   `json:"id"`
 }
 
-// Publish is blockchain operation
-type Publish struct {
-	ProcessID              string                `json:"processID"`
-	ApplicationRelatedData []string              `json:"applicationRelatedData"`
-	ProcessRelatedData     string                `json:"processRelatedData"`
-	SubscriberInformation  SubscriberInformation `json:"subscriberInformation"`
+// FromToData is blockchain concept
+type FromToData struct {
+	ProcessID         string
+	ProcessInstanceID string
+	IESMID            string
 }
 
-// ChangeCondition is blockchain operation
-type ChangeCondition struct {
-	ProcessID string `json:"processID"`
-	Condition string `json:"condition"`
+// WorkflowRelevantData is blockchain concept
+type WorkflowRelevantData struct {
+	From, To FromToData
 }
 
-// ChangeProcessData is blockchain operation
-type ChangeProcessData struct {
-	ProcessID                       string   `json:"processID"`
-	IsProcessRelatedDataChanged     bool     `json:"isProcessRelatedDataChanged"`
-	ApplicationRelatedData          []string `json:"applicationRelatedData"`
-	IsApplicationRelatedDataChanged bool     `json:"isApplicationRelatedDataChanged"`
-	ProcessRelatedData              string   `json:"processRelatedData"`
+// ApplicationData is blockchain concept
+type ApplicationData struct {
+	URL string `json:"url"`
 }
 
-// ChangeSubscriberInformation is blockchain operation
-type ChangeSubscriberInformation struct {
-	ProcessID             string                `json:"processID"`
+// Payload is blockchain concept
+type Payload struct {
+	ApplicationData      ApplicationData      `json:"applicationData"`
+	WorkflowRelevantData WorkflowRelevantData `json:"workflowRelevantData"`
+	WorkflowControlData  string               `json:"workflowControlData"`
+}
+
+// IM is blockchain asset
+type IM struct {
+	ID                    string                `json:"id"`
+	Payload               Payload               `json:"payload"`
+	Owner                 string                `json:"owner"`
 	SubscriberInformation SubscriberInformation `json:"subscriberInformation"`
 }
 
-// ProcessInstance is blockchain asset 
-type ProcessInstance struct {
-	ProcessID              string                `json:"processID"`
-	Owner                  string                `json:"owner"`
-	SubscriberInformation  SubscriberInformation `json:"subscriberInformation"`
-	Condition              string                `json:"condition"`
-	ApplicationRelatedData []string              `json:"applicationRelatedData"`
-	ProcessRelatedData     string                `json:"processRelatedData"`
+// PIIS is blockchain asset
+type PIIS struct {
+	ID                    string     `json:"id"`
+	From                  FromToData `json:"from"`
+	To                    FromToData `json:"to"`
+	IMID                  string
+	Owner                 string                `json:"owner"`
+	SubscriberInformation SubscriberInformation `json:"subscriberInformation"`
+}
+
+// PublishIM is blockchain operation
+type PublishIM struct {
+	IM IM `json:"im"`
+}
+
+// PublishPIIS is blockchain operation
+type PublishPIIS struct {
+	PIIS PIIS `json:"piis"`
 }

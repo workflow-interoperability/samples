@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/rs/xid"
-
 	"github.com/workflow-interoperability/samples/worker/types"
+
 	"github.com/zeebe-io/zeebe/clients/go/entities"
 	"github.com/zeebe-io/zeebe/clients/go/worker"
 )
@@ -45,9 +45,34 @@ func BlockchainTransaction(url, body string) error {
 	return nil
 }
 
-// GetProcessInstance return process instance data
-func GetProcessInstance(url string) (types.ProcessInstance, error) {
-	var ret types.ProcessInstance
+// GetPIIS return piis
+func GetPIIS(url string) (types.PIIS, error) {
+	var ret types.PIIS
+	httpClient := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return ret, err
+	}
+	req.Header.Set("Accept", "application/json")
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return ret, err
+	}
+	defer resp.Body.Close()
+	resbody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return ret, err
+	}
+	if resp.StatusCode != 200 {
+		return ret, errors.New(string(resbody))
+	}
+	err = json.Unmarshal(resbody, &ret)
+	return ret, err
+}
+
+// GetIM return im
+func GetIM(url string) (types.IM, error) {
+	var ret types.IM
 	httpClient := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
