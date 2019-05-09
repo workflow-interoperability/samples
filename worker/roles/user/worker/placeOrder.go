@@ -3,8 +3,10 @@ package worker
 import (
 	"encoding/json"
 	"log"
+	"net/url"
 	"strconv"
 
+	"github.com/gorilla/websocket"
 	"github.com/workflow-interoperability/samples/worker/services"
 	"github.com/workflow-interoperability/samples/worker/types"
 	"github.com/zeebe-io/zeebe/clients/go/entities"
@@ -13,6 +15,8 @@ import (
 
 // PlaceOrderWorker place order
 func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
+	processID := "user"
+	IESMID := "1"
 	jobKey := job.GetKey()
 	log.Println("Start place order " + strconv.Itoa(int(jobKey)))
 
@@ -38,69 +42,84 @@ func PlaceOrderWorker(client worker.JobClient, job entities.Job) {
 		services.FailJob(client, job)
 		return
 	}
-	newProcessInstance := types.Publish{
-		ProcessID:              id,
-		ProcessRelatedData:     string(aData),
-		ApplicationRelatedData: []string{},
+	newIM := types.IM{
+		ID: id,
+		Payload: types.Payload{
+			ApplicationData: types.ApplicationData{
+				URL: string(aData),
+			},
+			WorkflowRelevantData: types.WorkflowRelevantData{
+				From: types.FromToData{
+					ProcessID:         processID,
+					ProcessInstanceID: strconv.Itoa(int(jobKey)),
+					IESMID:            IESMID,
+				},
+				To: types.FromToData{
+					ProcessID:         "seller",
+					ProcessInstanceID: "-1",
+					IESMID:            "1",
+				},
+			},
+		},
+		Owner: "user",
 		SubscriberInformation: types.SubscriberInformation{
-			Roles: []string{},
-			ID:    "",
+			ID: "seller",
 		},
 	}
-	body, err := json.Marshal(&newProcessInstance)
+	pim := types.PublishIM{newIM}
+	body, err := json.Marshal(&pim)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	err = services.BlockchainTransaction("http://127.0.0.1:3000/api/Publish", string(body))
+	err = services.BlockchainTransaction("http://127.0.0.1:3000/api/PublishIM", string(body))
 	if err != nil {
 		log.Println(err)
 		services.FailJob(client, job)
 		return
 	}
 	payload["processID"] = id
-	log.Println("Publish process success")
+	log.Println("Publish IM success")
 
-	// change blockchain instance state
-	reqData1 := types.ChangeSubscriberInformation{
-		ProcessID: payload["processID"].(string),
-		SubscriberInformation: types.SubscriberInformation{
-			Roles: []string{"seller"},
-		},
-	}
-	reqData3 := types.ChangeCondition{
-		ProcessID: payload["processID"].(string),
-		Condition: "ordered",
-	}
-
-	jsonReqData1, err := json.Marshal(&reqData1)
+	// waiting for PIIS from receiver
+	// listen to blockchain event
+	u := url.URL{Scheme: "ws", Host: "127.0.0.1:3001", Path: ""}
+	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		log.Println(err)
-		services.FailJob(client, job)
 		return
 	}
-	jsonReqData3, err := json.Marshal(&reqData3)
-	if err != nil {
-		log.Println(err)
-		services.FailJob(client, job)
-		return
+	defer c.Close()
+	for {
+		finished := false
+		_, msg, err := c.ReadMessage()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		// check message type and handle
+		var structMsg map[string]interface{}
+		err = json.Unmarshal(msg, &structMsg)
+		if err != nil {
+			log.Println(err)
+			services.FailJob(client, job)
+			return
+		}
+		switch structMsg["$class"].(string) {
+		case "org.sysu.wf.PIISCreatedEvent":
+			if ok, err := publishPIIS(structMsg["id"].(string), processID, strconv.Itoa(int(jobKey)), IESMID, newIM, c); err != nil {
+				services.FailJob(client, job)
+				return
+			} else if ok {
+				finished = true
+				break
+			}
+		default:
+			continue
+		}
+		if finished {
+			break
+		}
 	}
-
-	err = services.BlockchainTransaction("http://127.0.0.1:3000/api/ChangeSubscriberInformation", string(jsonReqData1))
-	if err != nil {
-		log.Println(err)
-		services.FailJob(client, job)
-		return
-	}
-	log.Println("Change subscriber success")
-	err = services.BlockchainTransaction("http://127.0.0.1:3000/api/ChangeCondition", string(jsonReqData3))
-	if err != nil {
-		log.Println(err)
-		services.FailJob(client, job)
-		return
-	}
-	log.Println("Change condition to ordered success")
-
-	log.Println("Place order " + strconv.Itoa(int(jobKey)) + "success")
 	request.Send()
 }
