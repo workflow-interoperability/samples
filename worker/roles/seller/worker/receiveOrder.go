@@ -38,7 +38,7 @@ func ReceiveOrderWorker(client worker.JobClient, job entities.Job) {
 		ID: id,
 		From: types.FromToData{
 			ProcessID:         processID,
-			ProcessInstanceID: strconv.Itoa(int(jobKey)),
+			ProcessInstanceID: payload["processInstanceID"].(string),
 			IESMID:            iesmid,
 		},
 		To: types.FromToData{
@@ -46,8 +46,7 @@ func ReceiveOrderWorker(client worker.JobClient, job entities.Job) {
 			ProcessInstanceID: payload["fromProcessInstanceID"].(string),
 			IESMID:            "1",
 		},
-		IMID:  "-1",
-		Owner: "user",
+		IMID: "-1",
 		SubscriberInformation: types.SubscriberInformation{
 			Roles: []string{},
 			ID:    "user",
@@ -59,12 +58,12 @@ func ReceiveOrderWorker(client worker.JobClient, job entities.Job) {
 		log.Println(err)
 		return
 	}
-	err = services.BlockchainTransaction("http://127.0.0.1:3000/api/PublishPIIS", string(body))
+	err = services.BlockchainTransaction("http://127.0.0.1:3001/api/PublishPIIS", string(body))
 	if err != nil {
 		log.Println(err)
 		services.FailJob(client, job)
 		return
 	}
-	log.Println("finish receive order " + strconv.Itoa(int(jobKey)))
+	log.Println("Publish PIIS success")
 	request.Send()
 }

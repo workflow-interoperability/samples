@@ -9,13 +9,21 @@
         <zeebe:taskDefinition type="placeOrder" retries="1" />
       </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_06fokcz</bpmn:incoming>
-      <bpmn:outgoing>SequenceFlow_0b1yyzm</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_1aqyosj</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:sequenceFlow id="SequenceFlow_06fokcz" sourceRef="StartEvent_1" targetRef="ServiceTask_placeOrder" />
-    <bpmn:endEvent id="EndEvent_1j79sgy">
-      <bpmn:incoming>SequenceFlow_0b1yyzm</bpmn:incoming>
+    <bpmn:serviceTask id="ServiceTask_1w2x13l" name="signOrder">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="signOrder" retries="1" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_1aqyosj</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1gknqcs</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_1aqyosj" sourceRef="ServiceTask_placeOrder" targetRef="ServiceTask_1w2x13l" />
+    <bpmn:endEvent id="EndEvent_04uwqsa">
+      <bpmn:incoming>SequenceFlow_1gknqcs</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="SequenceFlow_0b1yyzm" sourceRef="ServiceTask_placeOrder" targetRef="EndEvent_1j79sgy" />
+    <bpmn:sequenceFlow id="SequenceFlow_1gknqcs" sourceRef="ServiceTask_1w2x13l" targetRef="EndEvent_04uwqsa" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="user">
@@ -29,12 +37,19 @@
         <di:waypoint x="437" y="232" />
         <di:waypoint x="565" y="232" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="EndEvent_1j79sgy_di" bpmnElement="EndEvent_1j79sgy">
-        <dc:Bounds x="795" y="214" width="36" height="36" />
+      <bpmndi:BPMNShape id="ServiceTask_1w2x13l_di" bpmnElement="ServiceTask_1w2x13l">
+        <dc:Bounds x="815" y="192" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="SequenceFlow_0b1yyzm_di" bpmnElement="SequenceFlow_0b1yyzm">
+      <bpmndi:BPMNEdge id="SequenceFlow_1aqyosj_di" bpmnElement="SequenceFlow_1aqyosj">
         <di:waypoint x="665" y="232" />
-        <di:waypoint x="795" y="232" />
+        <di:waypoint x="815" y="232" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_04uwqsa_di" bpmnElement="EndEvent_04uwqsa">
+        <dc:Bounds x="1107" y="214" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1gknqcs_di" bpmnElement="SequenceFlow_1gknqcs">
+        <di:waypoint x="915" y="232" />
+        <di:waypoint x="1107" y="232" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

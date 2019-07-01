@@ -9,6 +9,7 @@ import (
 	"github.com/workflow-interoperability/samples/worker/roles/seller/worker"
 	"github.com/workflow-interoperability/samples/worker/services"
 	"github.com/zeebe-io/zeebe/clients/go/zbc"
+	"gitlab.com/go-online/public-service/tools"
 )
 
 const brokerAddr = "127.0.0.1:26500"
@@ -52,7 +53,7 @@ func main() {
 				return
 			}
 			switch structMsg["$class"].(string) {
-			case "org.sysu.wf.PublishIM":
+			case "org.sysu.wf.IMCreatedEvent":
 				createSellerWorkflowInstance(structMsg["id"].(string), processID, iesmid, client)
 			}
 		}
@@ -82,6 +83,7 @@ func createSellerWorkflowInstance(imID, processID, iermID string, client zbc.ZBC
 		}
 	}
 	data["fromProcessInstanceID"] = imData.Payload.WorkflowRelevantData.From.ProcessInstanceID
+	data["processInstanceID"] = tools.GenerateXID()
 
 	// add workflow instance
 	request, err := client.NewCreateInstanceCommand().BPMNProcessId("seller").LatestVersion().VariablesFromMap(data)
